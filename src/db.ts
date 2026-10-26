@@ -19,22 +19,29 @@ export class Db {
     return new Db(pg);
   }
 
-  /** Run as a signed-in app user. Row-level security applies. */
-  as<T>(userId: string, fn: (q: Q) => Promise<T>) {
+  /** Run as a signed-in app user (phone verified by OTP at sign-in). Row-level security applies. */
+  as<T>(userId: string, fn: (q: Q) => Promise<T>, phone?: string) {
     if (!/^[0-9a-f-]{36}$/.test(userId)) throw new Error('bad user id');
-    return this.run(`set role authenticated; set request.jwt.claim.sub = '${userId}';`, fn);
+    if (phone && !/^\+[0-9]{8,15}$/.test(phone)) throw new Error('bad phone');
+    const claims = JSON.stringify({ sub: userId, role: 'authenticated', ...(phone ? { phone } : {}) });
+    return this.run(`set role authenticated; set request.jwt.claims = '${claims}';`, fn);
+  }
+
+  /** Run as a signed-out visitor. */
+  asAnon<T>(fn: (q: Q) => Promise<T>) {
+    return this.run(`set role anon; reset request.jwt.claims;`, fn);
   }
 
   /** Run as the backend (Edge Function with the service key), e.g. the verification webhook. */
   asService<T>(fn: (q: Q) => Promise<T>) {
-    return this.run(`set role service_role; reset request.jwt.claim.sub;`, fn);
+    return this.run(`set role service_role; reset request.jwt.claims;`, fn);
   }
 
   private run<T>(setup: string, fn: (q: Q) => Promise<T>): Promise<T> {
     const go = async () => {
       await this.pg.exec(setup);
       try { return await fn(new Q(this.pg)); }
-      finally { await this.pg.exec('reset role; reset request.jwt.claim.sub;'); }
+      finally { await this.pg.exec('reset role; reset request.jwt.claims;'); }
     };
     const p = this.queue.then(go, go);
     this.queue = p.catch(() => undefined);
