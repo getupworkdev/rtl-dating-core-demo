@@ -10,7 +10,7 @@ describe('mutual match', () => {
   test('a one-way like is not a match', async () => {
     const noa = await woman(db); const yoni = await man(db);
     expect(await swipe(db, noa, yoni)).toBeNull();
-    expect(await db.as(yoni.id, (q) => q.rows(`select * from matches`))).toHaveLength(0);
+    expect(await db.as(yoni.id, (q) => q.rows(`select id from matches`))).toHaveLength(0);
   });
 
   test('the second like creates the match, visible to both', async () => {
