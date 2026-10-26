@@ -4,6 +4,10 @@ The rules a Hebrew-first dating app has to get right on the server, written as S
 
 All people, phone numbers and data in this repo are fictional.
 
+**Also in this repo:** [screen designs](docs/design) (Hebrew, RTL) · [architecture](docs/ARCHITECTURE.md) · [roadmap](docs/ROADMAP.md)
+
+![Screens](docs/design/00-overview.png)
+
 ```bash
 npm install
 npm test          # 68 tests against real Postgres (PGlite, Postgres compiled to WebAssembly)
@@ -66,7 +70,7 @@ tests/                                         one suite per area
 
 ## What this repo does NOT do
 
-- **No app UI.** No swipe deck, screens or RTL layout here. That is the React Native side.
+- **No app code.** The screens in `docs/design` are design mockups, not the React Native app.
 - **No real verification vendor.** `service_record_verification()` is what the vendor webhook handler would call after checking the vendor's signature. The handler itself (an Edge Function) is not included.
 - **No photos.** In production they go in private Supabase Storage buckets with policies mirroring `profiles_self_or_match`, served through short-lived signed URLs.
 - **No payments.** Subscriptions would come from RevenueCat webhooks writing entitlements server-side.
